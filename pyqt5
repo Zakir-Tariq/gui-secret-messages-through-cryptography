@@ -1,0 +1,82 @@
+import sys
+from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QLineEdit, QPushButton, QVBoxLayout, QMessageBox
+from cryptography.fernet import Fernet
+
+class MessageEncryptor(QWidget):
+    def __init__(self):
+        super().__init__()
+
+        # Encryption key
+        self.encryption_key = "nAkd8Z1uKDv5gh-NX_1ZZwEOKrbNp4-8EijPbQ0-FfA="
+        self.cipher_suite = Fernet(self.encryption_key.encode())
+
+        # Set up the GUI
+        self.init_ui()
+
+    def init_ui(self):
+        # Stylish Fonts
+        entry_font = "Arial, 12"
+        button_font = "Arial, 12, bold"
+        result_font = "Arial, 12"
+
+        # Widgets
+        label_message = QLabel("Enter a message:")
+        label_message.setStyleSheet("font-family: " + entry_font)
+        self.entry_message = QLineEdit()
+        self.entry_message.setStyleSheet("font-family: " + entry_font)
+        button_encrypt = QPushButton("Encrypt")
+        button_encrypt.setStyleSheet("font-family: " + button_font + "; background-color: #4CAF50; color: white;")
+        button_decrypt = QPushButton("Decrypt")
+        button_decrypt.setStyleSheet("font-family: " + button_font + "; background-color: #3498db; color: white;")
+        self.entry_result = QLineEdit()
+        self.entry_result.setPlaceholderText("Result")
+        self.entry_result.setStyleSheet("font-family: " + result_font)
+        self.entry_result.setReadOnly(True)
+
+        # Layout
+        layout = QVBoxLayout()
+        layout.addWidget(label_message)
+        layout.addWidget(self.entry_message)
+        layout.addWidget(button_encrypt)
+        layout.addWidget(button_decrypt)
+        layout.addWidget(self.entry_result)
+
+        # Connect signals
+        button_encrypt.clicked.connect(self.on_encrypt)
+        button_decrypt.clicked.connect(self.on_decrypt)
+
+        # Set up the main window
+        self.setWindowTitle("Message Encryption/Decryption")
+        self.setGeometry(100, 100, 400, 250)
+        self.setLayout(layout)
+
+    def on_encrypt(self):
+        message = self.entry_message.text()
+        if message:
+            encrypted_message = self.cipher_suite.encrypt(message.encode()).decode()
+            self.entry_result.setText(f"Encrypted Message: {encrypted_message}")
+        else:
+            self.show_warning("Warning", "Please enter a message to encrypt.")
+
+    def on_decrypt(self):
+        encrypted_message = self.entry_message.text()
+        if encrypted_message:
+            try:
+                decrypted_message = self.cipher_suite.decrypt(encrypted_message.encode()).decode()
+                self.entry_result.setText(f"Decrypted Message: {decrypted_message}")
+            except Exception as e:
+                self.show_error("Error", "Invalid decryption key or message.")
+        else:
+            self.show_warning("Warning", "Please enter an encrypted message to decrypt.")
+
+    def show_warning(self, title, message):
+        QMessageBox.warning(self, title, message, QMessageBox.Ok)
+
+    def show_error(self, title, message):
+        QMessageBox.critical(self, title, message, QMessageBox.Ok)
+
+if __name__ == "__main__":
+    app = QApplication(sys.argv)
+    window = MessageEncryptor()
+    window.show()
+    sys.exit(app.exec_())
